@@ -1,0 +1,128 @@
+========================================
+HƯỚNG DẪN CÀI ĐẶT VÀ CHẠY GAME
+(Cho máy khác)
+========================================
+
+📋 YÊU CẦU HỆ THỐNG:
+--------------------
+- Python 3.7 trở lên
+- Windows/Linux/Mac
+- Kết nối mạng (cho multiplayer)
+
+========================================
+BƯỚC 1: CÀI ĐẶT PYTHON
+========================================
+
+1. Tải Python từ: https://www.python.org/downloads/
+2. Cài đặt Python (nhớ tick "Add Python to PATH")
+3. Kiểm tra cài đặt:
+   python --version
+
+========================================
+BƯỚC 2: CÀI ĐẶT DEPENDENCIES
+========================================
+
+Mở terminal/command prompt tại thư mục game và chạy:
+
+pip install -r requirements.txt
+
+Hoặc cài từng package:
+pip install pygame>=2.0.0
+pip install pytest>=7.0
+pip install numpy  (để tạo file âm thanh)
+
+========================================
+BƯỚC 3: TẠO FILE ÂM THANH (NẾU CẦN)
+========================================
+
+Chạy script để tạo file âm thanh:
+python create_sounds.py
+
+========================================
+BƯỚC 4: CHẠY GAME
+========================================
+
+CÁCH 1: Chạy từng bước (2 terminal)
+
+Terminal 1 - Server:
+--------------------
+cd "đường_dẫn_đến_game_multiplayer"
+python -m server.main
+
+Terminal 2 - Client (mở terminal mới):
+--------------------------------------
+cd "đường_dẫn_đến_game_multiplayer"
+python -m client.main
+
+Khi được hỏi "Bật âm thanh?", nhập: Y
+
+CÁCH 2: Dùng file batch (Windows)
+----------------------------------
+Double-click: start_game_with_audio.bat
+
+Hoặc: start_game.bat
+
+CÁCH 3: Dùng script shell (Linux/Mac/Git Bash)
+-----------------------------------------------
+bash start_game.sh
+
+========================================
+CẤU HÌNH MẠNG (NẾU CHƠI MULTIPLAYER)
+========================================
+
+Nếu chơi trên mạng LAN:
+1. Tìm IP của máy chạy server:
+   - Windows: ipconfig
+   - Linux/Mac: ifconfig hoặc ip addr
+   
+2. Sửa file: client/src/config.py
+   SERVER_IP = "192.168.x.x"  (IP của máy server)
+   SERVER_PORT = 5000
+
+3. Đảm bảo firewall cho phép port 5000
+
+========================================
+KIỂM TRA
+========================================
+
+Kiểm tra server đang chạy:
+- Windows: netstat -ano | findstr 5000
+- Linux/Mac: netstat -ano | grep 5000
+
+Kiểm tra âm thanh:
+python test_audio.py
+
+========================================
+XỬ LÝ LỖI THƯỜNG GẶP
+========================================
+
+1. "No module named pygame"
+   → Chạy: pip install pygame
+
+2. "Address already in use"
+   → Port 5000 đang được dùng, đổi port trong config
+
+3. "Connection refused"
+   → Kiểm tra server đã chạy chưa
+   → Kiểm tra firewall
+   → Kiểm tra SERVER_IP trong config
+
+4. "Unrecognized audio format"
+   → Chạy: python create_sounds.py để tạo lại file âm thanh
+
+========================================
+LỆNH NHANH
+========================================
+
+# Cài đặt tất cả
+pip install -r requirements.txt
+python create_sounds.py
+
+# Chạy server
+python -m server.main
+
+# Chạy client (terminal khác)
+python -m client.main
+
+========================================
+

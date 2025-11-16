@@ -1,0 +1,7 @@
+# Shared constants
+GAME_WIDTH = 800
+GAME_HEIGHT = 600
+MAX_PLAYERS = 8
+MSG_TYPE_JOIN = 'join'
+MSG_TYPE_LEAVE = 'leave'
+MSG_TYPE_STATE = 'state'

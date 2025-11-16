@@ -1,0 +1,44 @@
+========================================
+LỆNH CHẠY GAME - COPY VÀ DÁN
+========================================
+
+📍 ĐẢM BẢO BẠN ĐANG Ở THƯ MỤC:
+   D:\Zalo Received Files\LTM\LTM\game_multiplayer
+
+========================================
+CÁCH 1: CHẠY TỪNG BƯỚC (2 TERMINAL)
+========================================
+
+TERMINAL 1 - SERVER:
+--------------------
+python -m server.main
+
+TERMINAL 2 - CLIENT (mở terminal mới):
+--------------------------------------
+python -m client.main
+
+Khi được hỏi "Bật âm thanh?", nhập: Y
+
+========================================
+CÁCH 2: DÙNG FILE BATCH (Windows)
+========================================
+
+Double-click: start_game_with_audio.bat
+
+Hoặc: start_game.bat
+
+========================================
+LƯU Ý QUAN TRỌNG:
+========================================
+
+✓ Lệnh đúng: python -m server.main
+✗ Lệnh sai:  python -m s
+
+✓ Lệnh đúng: python -m client.main
+✗ Lệnh sai:  python -m c
+
+✓ Phải chạy SERVER trước, sau đó mới chạy CLIENT
+✓ Phải ở đúng thư mục game_multiplayer
+
+========================================
+
