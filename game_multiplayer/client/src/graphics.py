@@ -14,6 +14,64 @@ except Exception:
     SCREEN_WIDTH = 800
     SCREEN_HEIGHT = 600
 
+class Particle:
+    """Một hạt particle đơn lẻ."""
+    def __init__(self, x, y, color, velocity_x=0, velocity_y=0, lifetime=0.5):
+        self.x = x
+        self.y = y
+        self.color = color
+        self.velocity_x = velocity_x
+        self.velocity_y = velocity_y
+        self.lifetime = lifetime
+        self.max_lifetime = lifetime
+        self.alpha = 255
+
+    def update(self, dt):
+        """Cập nhật vị trí và alpha của particle."""
+        self.x += self.velocity_x * dt
+        self.y += self.velocity_y * dt
+        self.lifetime -= dt
+        # Alpha giảm dần theo thời gian
+        self.alpha = int(255 * (self.lifetime / self.max_lifetime))
+
+    def is_alive(self):
+        """Kiểm tra particle còn sống không."""
+        return self.lifetime > 0
+
+
+class ParticleSystem:
+    """Hệ thống quản lý particles."""
+    def __init__(self):
+        self.particles = []
+
+    def add_particle(self, x, y, color=(200, 200, 200), velocity_x=0, velocity_y=0):
+        """Thêm một particle mới."""
+        import random
+        # Thêm một chút randomness
+        vx = velocity_x + random.uniform(-20, 20)
+        vy = velocity_y + random.uniform(-20, 20)
+        lifetime = random.uniform(0.3, 0.6)
+        self.particles.append(Particle(x, y, color, vx, vy, lifetime))
+
+    def update(self, dt):
+        """Cập nhật tất cả particles."""
+        for particle in self.particles[:]:
+            particle.update(dt)
+            if not particle.is_alive():
+                self.particles.remove(particle)
+
+    def draw(self, canvas, sx, sy):
+        """Vẽ tất cả particles lên canvas."""
+        if not pygame:
+            return
+        for particle in self.particles:
+            # Scale coordinates
+            vx = int(particle.x * sx)
+            vy = int(particle.y * sy)
+            # Vẽ particle nhỏ (2-3 pixels)
+            pygame.draw.circle(canvas, particle.color[:3], (vx, vy), max(1, int(2 * sy)))
+
+
 class GameRenderer:
     def __init__(self, screen):
         self.screen = screen
@@ -26,6 +84,8 @@ class GameRenderer:
         # Precompute scale factors
         self._sx = self._virtual_w / float(SCREEN_WIDTH)
         self._sy = self._virtual_h / float(SCREEN_HEIGHT)
+        # Particle system
+        self.particle_system = ParticleSystem()
 
     def clear(self, color=(0, 0, 0)):
         if pygame:
@@ -81,8 +141,15 @@ class GameRenderer:
             pygame.draw.line(scan, (0, 0, 0, 24), (0, y), (w, y))
         surface.blit(scan, (0, 0))
 
+    def draw_particles(self):
+        """Vẽ particles lên canvas."""
+        if pygame:
+            self.particle_system.draw(self.canvas, self._sx, self._sy)
+
     def present(self):
         if pygame:
+            # Vẽ particles trước khi scale
+            self.draw_particles()
             # Scale low-res canvas to screen with nearest-neighbor
             scaled = pygame.transform.scale(self.canvas, (SCREEN_WIDTH, SCREEN_HEIGHT))
             self.screen.blit(scaled, (0, 0))

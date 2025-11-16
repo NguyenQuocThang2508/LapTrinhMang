@@ -448,6 +448,9 @@ def main():
             footstep_cooldown = min(footstep_cooldown + dt, 10.0)
             dash_sfx_cooldown = min(dash_sfx_cooldown + dt, 10.0)
             
+            # Update particles
+            renderer.particle_system.update(dt)
+            
             # Xử lý events
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -568,6 +571,17 @@ def main():
                             try: sounds['dash'].play()
                             except Exception: pass
                             dash_sfx_cooldown = 0.0
+                        # Thêm particles cho Player 1
+                        p1_obj = game_state.players[p1]
+                        vel_x1 = dx1 / dt if dt > 0 else 0
+                        vel_y1 = dy1 / dt if dt > 0 else 0
+                        for _ in range(3):
+                            renderer.particle_system.add_particle(
+                                p1_obj.x, p1_obj.y,
+                                color=(150, 150, 150),
+                                velocity_x=-vel_x1 * 0.3,
+                                velocity_y=-vel_y1 * 0.3
+                            )
                         networks[0].send({"type": "move", "id": p1, "x": new_x1, "y": new_y1})
 
                 # Update + send P2
@@ -587,6 +601,17 @@ def main():
                             try: sounds['dash'].play()
                             except Exception: pass
                             dash_sfx_cooldown = 0.0
+                        # Thêm particles cho Player 2
+                        p2_obj = game_state.players[p2]
+                        vel_x2 = dx2 / dt if dt > 0 else 0
+                        vel_y2 = dy2 / dt if dt > 0 else 0
+                        for _ in range(3):
+                            renderer.particle_system.add_particle(
+                                p2_obj.x, p2_obj.y,
+                                color=(150, 150, 150),
+                                velocity_x=-vel_x2 * 0.3,
+                                velocity_y=-vel_y2 * 0.3
+                            )
                         networks[1].send({"type": "move", "id": p2, "x": new_x2, "y": new_y2})
             else:
                 # Single-player theo lựa chọn điều khiển
@@ -621,6 +646,19 @@ def main():
                             try: sounds['dash'].play()
                             except Exception: pass
                             dash_sfx_cooldown = 0.0
+                        # Thêm particles khi di chuyển
+                        player = game_state.players[my_player_id]
+                        # Tính velocity từ hướng di chuyển
+                        vel_x = dx / dt if dt > 0 else 0
+                        vel_y = dy / dt if dt > 0 else 0
+                        # Thêm 3-5 particles
+                        for _ in range(3):
+                            renderer.particle_system.add_particle(
+                                player.x, player.y,
+                                color=(150, 150, 150),
+                                velocity_x=-vel_x * 0.3,
+                                velocity_y=-vel_y * 0.3
+                            )
                         network.send({"type": "move", "id": my_player_id, "x": new_x, "y": new_y})
             
             # Nhận messages từ server (non-blocking)
