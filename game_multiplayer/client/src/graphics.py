@@ -92,13 +92,30 @@ class GameRenderer:
             # Clear the low-res canvas
             self.canvas.fill(color)
 
-    def draw_player(self, x, y, color=(255, 255, 255)):
+    def draw_player(self, x, y, color=(255, 255, 255), spawn_time=None):
         if pygame:
             # Scale world coords to virtual canvas
             vx = int(x * self._sx)
             vy = int(y * self._sy)
             # Radius scales with Y factor to keep aspect
             vr = max(1, int(16 * self._sy))
+            
+            # Animation nhấp nháy khi spawn
+            if spawn_time is not None:
+                import time
+                elapsed = time.time() - spawn_time
+                if elapsed < 2.0:  # Animation trong 2 giây
+                    # Tính alpha: 0 -> 255 trong 2 giây, nhấp nháy
+                    blink_speed = 10  # Tốc độ nhấp nháy
+                    alpha = int(128 + 127 * (1 + (elapsed * blink_speed) % 2 - 1))
+                    # Tạo surface với alpha
+                    temp_surface = pygame.Surface((vr * 2, vr * 2), pygame.SRCALPHA)
+                    color_with_alpha = (*color, alpha)
+                    pygame.draw.circle(temp_surface, color_with_alpha, (vr, vr), vr)
+                    self.canvas.blit(temp_surface, (vx - vr, vy - vr))
+                    return
+            
+            # Vẽ player bình thường
             pygame.draw.circle(self.canvas, color, (vx, vy), vr)
 
     def draw_name(self, x, y, name: str, color=(230, 230, 230)):

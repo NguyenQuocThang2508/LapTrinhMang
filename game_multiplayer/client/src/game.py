@@ -9,6 +9,7 @@ class Player:
     x: float = 0.0
     y: float = 0.0
     hp: int = 100
+    spawn_time: float = None  # Thời điểm spawn (None nếu không mới spawn)
 
 @dataclass
 class Obstacle:
@@ -31,10 +32,12 @@ class GameState:
         if player_id not in self.players:
             # Vị trí ban đầu random
             import random
+            import time
             self.players[player_id] = Player(
                 id=player_id,
                 x=random.uniform(100, 700),
-                y=random.uniform(100, 500)
+                y=random.uniform(100, 500),
+                spawn_time=time.time()  # Ghi lại thời điểm spawn
             )
 
     def remove_player(self, player_id: str):

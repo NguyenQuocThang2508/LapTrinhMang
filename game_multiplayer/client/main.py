@@ -730,7 +730,12 @@ def main():
                     color = (0, 255, 0) if idx == 0 else (255, 255, 0)
                 else:
                     color = (0, 255, 0) if (my_player_id and pid == my_player_id) else (255, 0, 0)
-                renderer.draw_player(player.x or 400, player.y or 300, color)
+                renderer.draw_player(
+                    player.x or 400, 
+                    player.y or 300, 
+                    color,
+                    spawn_time=getattr(player, 'spawn_time', None)
+                )
                 renderer.draw_name(player.x or 400, (player.y or 300), getattr(player, 'name', ''))
             
             # VẼ HUD XU lên canvas nhỏ để không bị ghi đè
@@ -781,6 +786,8 @@ def handle_server_message(msg, game_state, sounds, audio_enabled):
         for pid, data in players_data.items():
             if pid not in game_state.players:
                 game_state.add_player(pid)
+                # Set spawn_time cho player mới
+                game_state.players[pid].spawn_time = time.time()
             # cập nhật tên (nếu có)
             if 'name' in data:
                 game_state.players[pid].name = data.get('name') or ''
