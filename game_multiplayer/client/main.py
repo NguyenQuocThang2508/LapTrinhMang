@@ -727,9 +727,9 @@ def main():
             for pid, player in game_state.players.items():
                 if local_multiplayer and pid in player_ids:
                     idx = player_ids.index(pid)
-                    color = (0, 255, 0) if idx == 0 else (255, 255, 0)
+                    color = (0, 255, 100) if idx == 0 else (255, 200, 0)  # Xanh lá sáng, vàng
                 else:
-                    color = (0, 255, 0) if (my_player_id and pid == my_player_id) else (255, 0, 0)
+                    color = (0, 255, 100) if (my_player_id and pid == my_player_id) else (255, 80, 80)  # Xanh lá, đỏ nhạt
                 renderer.draw_player(
                     player.x or 400, 
                     player.y or 300, 

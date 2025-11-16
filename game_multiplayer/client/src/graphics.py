@@ -87,7 +87,7 @@ class GameRenderer:
         # Particle system
         self.particle_system = ParticleSystem()
 
-    def clear(self, color=(0, 0, 0)):
+    def clear(self, color=(20, 20, 40)):  # Xanh đậm thay vì đen
         if pygame:
             # Clear the low-res canvas
             self.canvas.fill(color)
@@ -166,15 +166,26 @@ class GameRenderer:
             text_rect = text_surf.get_rect(center=(vx, bar_y - 8))
             self.canvas.blit(text_surf, text_rect)
 
-    def draw_name(self, x, y, name: str, color=(230, 230, 230)):
+    def draw_text_with_shadow(self, x, y, text, color=(255, 255, 255), shadow_color=(0, 0, 0)):
+        """Vẽ text với shadow để dễ đọc."""
+        if not pygame or not self._font:
+            return
+        # Vẽ shadow (lệch 1 pixel)
+        shadow_surf = self._font.render(text, True, shadow_color)
+        shadow_rect = shadow_surf.get_rect(center=(x + 1, y + 1))
+        self.canvas.blit(shadow_surf, shadow_rect)
+        # Vẽ text chính
+        text_surf = self._font.render(text, True, color)
+        text_rect = text_surf.get_rect(center=(x, y))
+        self.canvas.blit(text_surf, text_rect)
+
+    def draw_name(self, x, y, name: str, color=(255, 255, 255)):
         if pygame and self._font and name:
             vx = int(x * self._sx)
             vy = int(y * self._sy)
-            surf = self._font.render(name, True, color)
-            rect = surf.get_rect(center=(vx, vy - int(26 * self._sy)))
-            self.canvas.blit(surf, rect)
+            self.draw_text_with_shadow(vx, vy - int(26 * self._sy), name, color)
 
-    def draw_obstacle(self, x, y, width, height, color=(100, 50, 30)):
+    def draw_obstacle(self, x, y, width, height, color=(120, 60, 40)):  # Sáng hơn
         """Vẽ chướng ngại vật dạng hình chữ nhật."""
         if pygame:
             vx = int(x * self._sx)
@@ -182,8 +193,8 @@ class GameRenderer:
             vw = max(1, int(width * self._sx))
             vh = max(1, int(height * self._sy))
             pygame.draw.rect(self.canvas, color, (vx, vy, vw, vh))
-            # Vẽ viền để dễ nhìn
-            pygame.draw.rect(self.canvas, (60, 30, 15), (vx, vy, vw, vh), 1)
+            # Vẽ viền sáng hơn
+            pygame.draw.rect(self.canvas, (180, 90, 60), (vx, vy, vw, vh), 2)
 
     def draw_goal(self, x, y, width, height):
         if pygame:
