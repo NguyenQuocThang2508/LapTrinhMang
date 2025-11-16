@@ -92,7 +92,7 @@ class GameRenderer:
             # Clear the low-res canvas
             self.canvas.fill(color)
 
-    def draw_player(self, x, y, color=(255, 255, 255), spawn_time=None):
+    def draw_player(self, x, y, color=(255, 255, 255), spawn_time=None, hp=100, max_hp=100):
         if pygame:
             # Scale world coords to virtual canvas
             vx = int(x * self._sx)
@@ -117,6 +117,54 @@ class GameRenderer:
             
             # Vẽ player bình thường
             pygame.draw.circle(self.canvas, color, (vx, vy), vr)
+            
+            # Vẽ health bar sau khi vẽ player
+            if hp < max_hp:  # Chỉ vẽ khi HP không đầy
+                self.draw_health_bar(x, y, hp, max_hp)
+
+    def draw_health_bar(self, x, y, hp, max_hp=100):
+        """Vẽ health bar phía trên player."""
+        if not pygame:
+            return
+        
+        # Scale coordinates
+        vx = int(x * self._sx)
+        vy = int(y * self._sy)
+        
+        # Kích thước health bar
+        bar_width = 30
+        bar_height = 4
+        bar_x = vx - bar_width // 2
+        bar_y = vy - int(25 * self._sy)  # Phía trên player
+        
+        # Tính tỷ lệ HP
+        hp_ratio = max(0, min(1, hp / max_hp))
+        
+        # Màu sắc: xanh khi HP cao, đỏ khi HP thấp
+        if hp_ratio > 0.6:
+            bar_color = (0, 255, 0)  # Xanh
+        elif hp_ratio > 0.3:
+            bar_color = (255, 255, 0)  # Vàng
+        else:
+            bar_color = (255, 0, 0)  # Đỏ
+        
+        # Vẽ background (màu đỏ đậm)
+        pygame.draw.rect(self.canvas, (80, 0, 0), (bar_x, bar_y, bar_width, bar_height))
+        
+        # Vẽ foreground (màu theo HP)
+        hp_width = int(bar_width * hp_ratio)
+        if hp_width > 0:
+            pygame.draw.rect(self.canvas, bar_color, (bar_x, bar_y, hp_width, bar_height))
+        
+        # Vẽ viền
+        pygame.draw.rect(self.canvas, (200, 200, 200), (bar_x, bar_y, bar_width, bar_height), 1)
+        
+        # Vẽ text HP (nếu có font)
+        if self._font and hp < max_hp:
+            hp_text = str(int(hp))
+            text_surf = self._font.render(hp_text, True, (255, 255, 255))
+            text_rect = text_surf.get_rect(center=(vx, bar_y - 8))
+            self.canvas.blit(text_surf, text_rect)
 
     def draw_name(self, x, y, name: str, color=(230, 230, 230)):
         if pygame and self._font and name:

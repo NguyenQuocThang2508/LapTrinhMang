@@ -734,7 +734,9 @@ def main():
                     player.x or 400, 
                     player.y or 300, 
                     color,
-                    spawn_time=getattr(player, 'spawn_time', None)
+                    spawn_time=getattr(player, 'spawn_time', None),
+                    hp=getattr(player, 'hp', 100),
+                    max_hp=100
                 )
                 renderer.draw_name(player.x or 400, (player.y or 300), getattr(player, 'name', ''))
             
