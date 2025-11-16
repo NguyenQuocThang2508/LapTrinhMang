@@ -741,7 +741,12 @@ def main():
             except Exception as e:
                 print("HUD render error:", e)
 
-            renderer.present()
+            renderer.present(
+                players=game_state.players,
+                obstacles=game_state.obstacles,
+                goal=getattr(game_state, 'goal', None),
+                my_player_id=my_player_id
+            )
         
         # Gửi message leave và đóng kết nối
         if local_multiplayer and networks and player_ids:

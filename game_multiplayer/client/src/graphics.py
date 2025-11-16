@@ -146,7 +146,59 @@ class GameRenderer:
         if pygame:
             self.particle_system.draw(self.canvas, self._sx, self._sy)
 
-    def present(self):
+    def draw_minimap(self, players, obstacles, goal, my_player_id=None):
+        """Vẽ mini-map ở góc trên bên phải."""
+        if not pygame:
+            return
+        
+        # Kích thước mini-map
+        map_width = 120
+        map_height = 90
+        map_x = SCREEN_WIDTH - map_width - 10
+        map_y = 10
+        
+        # Tạo surface cho mini-map
+        minimap_surface = pygame.Surface((map_width, map_height))
+        minimap_surface.fill((20, 20, 30))  # Nền tối
+        
+        # Scale factor để fit toàn bộ map vào mini-map
+        scale_x = map_width / SCREEN_WIDTH
+        scale_y = map_height / SCREEN_HEIGHT
+        
+        # Vẽ obstacles (màu nâu nhạt)
+        for obs_id, obstacle in obstacles.items():
+            obs_x = int(obstacle.x * scale_x)
+            obs_y = int(obstacle.y * scale_y)
+            obs_w = max(1, int(obstacle.width * scale_x))
+            obs_h = max(1, int(obstacle.height * scale_y))
+            pygame.draw.rect(minimap_surface, (100, 50, 30), (obs_x, obs_y, obs_w, obs_h))
+        
+        # Vẽ goal (màu xanh)
+        if goal:
+            goal_x = int(goal.get('x', 0) * scale_x)
+            goal_y = int(goal.get('y', 0) * scale_y)
+            goal_w = max(2, int(goal.get('width', 40) * scale_x))
+            goal_h = max(2, int(goal.get('height', 40) * scale_y))
+            pygame.draw.rect(minimap_surface, (0, 220, 100), (goal_x, goal_y, goal_w, goal_h))
+        
+        # Vẽ players
+        for pid, player in players.items():
+            px = int(player.x * scale_x)
+            py = int(player.y * scale_y)
+            # Màu khác nhau cho player của mình
+            if my_player_id and pid == my_player_id:
+                color = (0, 255, 0)  # Xanh lá cho mình
+            else:
+                color = (255, 0, 0)  # Đỏ cho người khác
+            pygame.draw.circle(minimap_surface, color, (px, py), 2)
+        
+        # Vẽ viền cho mini-map
+        pygame.draw.rect(minimap_surface, (100, 100, 100), (0, 0, map_width, map_height), 2)
+        
+        # Blit mini-map lên screen (sau khi đã scale canvas)
+        self.screen.blit(minimap_surface, (map_x, map_y))
+
+    def present(self, players=None, obstacles=None, goal=None, my_player_id=None):
         if pygame:
             # Vẽ particles trước khi scale
             self.draw_particles()
@@ -155,4 +207,9 @@ class GameRenderer:
             self.screen.blit(scaled, (0, 0))
             # Optional scanline overlay for CRT feel
             self._draw_scanlines(self.screen)
+            
+            # Vẽ mini-map (sau khi đã scale)
+            if players and obstacles is not None:
+                self.draw_minimap(players, obstacles, goal, my_player_id)
+            
             pygame.display.flip()
