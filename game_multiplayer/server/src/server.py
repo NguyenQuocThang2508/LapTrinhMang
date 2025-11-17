@@ -196,9 +196,16 @@ class GameServer:
                 print(f"ERROR in join handler: {e}", flush=True)
                 import traceback
                 traceback.print_exc()
+                # Nếu có lỗi, đóng kết nối
+                try:
+                    handler.conn.close()
+                except:
+                    pass
+                return
 
             # Broadcast join cho các clients khác trong cùng phòng
-            self._broadcast_player_event("join", handler.player_id, room_id, exclude_handler=handler)
+            if handler.player_id:
+                self._broadcast_player_event("join", handler.player_id, room_id, exclude_handler=handler)
             
         elif msg_type == 'move':
             # Client di chuyển

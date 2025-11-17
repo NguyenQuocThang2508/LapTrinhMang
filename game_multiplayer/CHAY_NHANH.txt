@@ -1,0 +1,59 @@
+========================================
+HƯỚNG DẪN CHẠY NHANH - COPY & PASTE
+========================================
+
+📍 ĐẢM BẢO ĐANG Ở THƯ MỤC:
+   D:/LTM/LTM/LTM/game_multiplayer
+
+========================================
+CÁCH 1: DÙNG FILE BATCH (Windows)
+========================================
+
+Double-click: start_game.bat
+
+========================================
+CÁCH 2: CHẠY THỦ CÔNG (2 Terminal)
+========================================
+
+TERMINAL 1 - SERVER (Git Bash):
+--------------------------------
+cd "D:/LTM/LTM/LTM/game_multiplayer"
+export PYTHONPATH=.
+python -m server.main
+
+TERMINAL 2 - CLIENT (Terminal mới):
+------------------------------------
+cd "D:/LTM/LTM/LTM/game_multiplayer"
+export PYTHONPATH=.
+python -m client.main
+
+========================================
+KHI CLIENT CHẠY, NHẬP:
+========================================
+
+1. Bật âm thanh? → n
+2. Tên player → Player1
+3. Room ID → Enter (default)
+4. Điều khiển → 4
+5. 2 người? → N
+
+========================================
+ĐIỀU KHIỂN:
+========================================
+
+- WASD hoặc Mũi tên: Di chuyển
+- Shift: Chạy nhanh
+- ESC: Thoát
+
+========================================
+LƯU Ý:
+========================================
+
+✓ Phải chạy SERVER trước
+✓ Giữ terminal server mở
+✓ Set PYTHONPATH trước khi chạy
+✓ Dùng Room ID "default" (Enter)
+
+========================================
+
+
