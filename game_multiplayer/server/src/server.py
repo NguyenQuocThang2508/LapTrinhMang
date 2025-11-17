@@ -133,7 +133,8 @@ class GameServer:
                     "y": player.y,
                     "hp": player.hp,
                     "score": getattr(player, "score", 0),
-                    "speed_boost": getattr(player, "speed_boost", 1.0)
+                    "speed_boost": getattr(player, "speed_boost", 1.0),
+                    "is_dead": getattr(player, "is_dead", False)
                 }
             # Thêm leaderboard vào state
             leaderboard = logic.get_leaderboard(3)
@@ -215,10 +216,26 @@ class GameServer:
                 new_x = max(0, min(GAME_WIDTH, x))
                 new_y = max(0, min(GAME_HEIGHT, y))
 
+                # Kiểm tra player có thể di chuyển không (đã hết cooldown respawn chưa)
+                player = logic.players[player_id]
+                current_time = time.time()
+                if player.is_dead:
+                    if logic.can_respawn(player_id, current_time):
+                        logic.respawn_player(player_id)
+                        self._send_to(handler, {"type": "respawned", "id": player_id})
+                    else:
+                        # Vẫn trong cooldown, không cho di chuyển
+                        return
+                
                 # Nếu chạm obstacle => chết: reset và thông báo riêng cho client
                 if logic.check_collision_with_obstacles(new_x, new_y):
-                    logic.reset_player(player_id)
-                    self._send_to(handler, {"type": "dead", "id": player_id})
+                    logic.reset_player(player_id, current_time)
+                    remaining_cooldown = player.respawn_time - current_time
+                    self._send_to(handler, {
+                        "type": "dead", 
+                        "id": player_id,
+                        "respawn_cooldown": remaining_cooldown
+                    })
                 else:
                     # Cập nhật vị trí
                     player = logic.players[player_id]

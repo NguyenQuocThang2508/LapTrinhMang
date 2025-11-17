@@ -812,10 +812,18 @@ def handle_server_message(msg, game_state, sounds, audio_enabled):
             except Exception:
                 pass
     elif msg_type == 'dead':
-        print("You died! Respawning...")
+        respawn_cooldown = msg.get('respawn_cooldown', 3.0)
+        print(f"You died! Respawning in {respawn_cooldown:.1f} seconds...")
         if audio_enabled and sounds.get('dead'):
             try:
                 sounds['dead'].play()
+            except Exception:
+                pass
+    elif msg_type == 'respawned':
+        print("You respawned! You can move now.")
+        if audio_enabled and sounds.get('join'):  # Dùng sound join cho respawn
+            try:
+                sounds['join'].play()
             except Exception:
                 pass
     elif msg_type == 'level':

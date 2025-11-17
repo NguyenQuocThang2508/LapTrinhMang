@@ -16,6 +16,9 @@ class ServerPlayer:
     score: int = 0  # Điểm số của người chơi
     speed_boost: float = 1.0  # Hệ số tăng tốc từ power-up
     speed_boost_end_time: float = 0.0  # Thời điểm hết hiệu lực speed boost
+    is_dead: bool = False  # Trạng thái chết
+    respawn_time: float = 0.0  # Thời điểm có thể respawn
+    respawn_cooldown: float = 3.0  # Cooldown 3 giây
 
 @dataclass
 class Obstacle:
@@ -175,10 +178,32 @@ class GameLogic:
         if player_id in self.players:
             self.players[player_id].score += points
 
-    def reset_player(self, player_id: str):
+    def reset_player(self, player_id: str, current_time: float = None):
+        """Reset player về vị trí spawn và bắt đầu cooldown respawn."""
         p = self.players.get(player_id)
         if p:
             p.x, p.y = self.start_pos
+            p.is_dead = True
+            if current_time is None:
+                import time
+                current_time = time.time()
+            p.respawn_time = current_time + p.respawn_cooldown
+    
+    def can_respawn(self, player_id: str, current_time: float) -> bool:
+        """Kiểm tra player có thể respawn chưa."""
+        p = self.players.get(player_id)
+        if not p:
+            return False
+        if not p.is_dead:
+            return True  # Đã sống rồi
+        return current_time >= p.respawn_time
+    
+    def respawn_player(self, player_id: str):
+        """Respawn player (chỉ gọi khi can_respawn trả về True)."""
+        p = self.players.get(player_id)
+        if p:
+            p.is_dead = False
+            p.respawn_time = 0.0
 
     def advance_level(self, player_id: str = None):
         """Chuyển level mới. Nếu có player_id, chỉ player đó được điểm."""
