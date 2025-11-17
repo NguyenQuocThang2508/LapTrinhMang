@@ -4,11 +4,11 @@ For production, replace with asyncio or a threaded model.
 """
 import socket
 import threading
-import json
 import time
 from server.src.config import SERVER_IP, SERVER_PORT
 from server.src.game_logic import GameLogic
 from shared.constants import GAME_WIDTH, GAME_HEIGHT
+from shared import protocol
 
 class ClientHandler(threading.Thread):
     def __init__(self, conn, addr, on_message):
@@ -29,7 +29,8 @@ class ClientHandler(threading.Thread):
                 data = self._recv_n(length)
                 if not data:
                     break
-                msg = json.loads(data.decode('utf-8'))
+                # Dữ liệu đã được nén + mã hóa ở tầng protocol
+                msg = protocol.decode(data)
                 self.on_message(self, msg)
         finally:
             try:
@@ -48,9 +49,8 @@ class ClientHandler(threading.Thread):
 
     def send(self, message: dict):
         try:
-            data = json.dumps(message).encode('utf-8')
-            length = len(data).to_bytes(4, 'big')
-            self.conn.sendall(length + data)
+            framed = protocol.encode(message)
+            self.conn.sendall(framed)
             # Đảm bảo dữ liệu được gửi ngay
             self.conn.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
         except Exception as e:

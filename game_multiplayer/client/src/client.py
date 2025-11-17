@@ -3,8 +3,8 @@ This is a minimal, synchronous TCP client used as a scaffold.
 Replace with a real async or threaded client as needed.
 """
 import socket
-import json
 import sys
+from shared import protocol
 
 class ClientNetwork:
     def __init__(self, host, port):
@@ -17,10 +17,8 @@ class ClientNetwork:
         self.sock.settimeout(10.0)  # Set timeout để tránh block vô hạn
 
     def send(self, message: dict):
-        data = json.dumps(message).encode('utf-8')
-        # prefix length
-        length = len(data).to_bytes(4, 'big')
-        self.sock.sendall(length + data)
+        framed = protocol.encode(message)
+        self.sock.sendall(framed)
 
     def receive(self):
         try:
@@ -37,7 +35,8 @@ class ClientNetwork:
                 payload += chunk
             if len(payload) < length:
                 return None
-            return json.loads(payload.decode('utf-8'))
+            # Dữ liệu đã được nén + mã hóa ở tầng protocol
+            return protocol.decode(payload)
         except socket.timeout:
             print("[CLIENT] Receive timeout")
             return None
