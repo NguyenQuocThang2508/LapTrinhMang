@@ -48,6 +48,50 @@ class GameRenderer:
             surf = self._font.render(name, True, color)
             rect = surf.get_rect(center=(vx, vy - int(26 * self._sy)))
             self.canvas.blit(surf, rect)
+    
+    def draw_score(self, x, y, score: int, color=(255, 255, 0)):
+        """Vẽ điểm số của player."""
+        if pygame and self._font:
+            vx = int(x * self._sx)
+            vy = int(y * self._sy)
+            text = f"{score}"
+            surf = self._font.render(text, True, color)
+            rect = surf.get_rect(center=(vx, vy + int(20 * self._sy)))
+            self.canvas.blit(surf, rect)
+    
+    def draw_leaderboard(self, leaderboard: list, my_id: str = None):
+        """Vẽ leaderboard top 3 ở góc trên bên phải."""
+        if not pygame or not self._font or not leaderboard:
+            return
+        # Vị trí góc trên bên phải (trên canvas ảo)
+        start_x = self._virtual_w - 120
+        start_y = 10
+        y_offset = 20
+        
+        # Vẽ tiêu đề
+        title = self._font.render("TOP 3", True, (255, 215, 0))
+        self.canvas.blit(title, (start_x, start_y))
+        
+        # Vẽ từng player
+        for i, entry in enumerate(leaderboard[:3]):
+            pid = entry.get('id', '')
+            name = entry.get('name', 'Unknown')
+            score = entry.get('score', 0)
+            is_me = (pid == my_id)
+            
+            # Màu: vàng cho top 1, bạc cho top 2, đồng cho top 3, xanh cho mình
+            if is_me:
+                color = (0, 255, 255)  # Cyan cho mình
+            elif i == 0:
+                color = (255, 215, 0)  # Vàng
+            elif i == 1:
+                color = (192, 192, 192)  # Bạc
+            else:
+                color = (205, 127, 50)  # Đồng
+            
+            text = f"{i+1}. {name[:8]}: {score}"
+            surf = self._font.render(text, True, color)
+            self.canvas.blit(surf, (start_x, start_y + (i+1) * y_offset))
 
     def draw_obstacle(self, x, y, width, height, color=(100, 50, 30)):
         """Vẽ chướng ngại vật dạng hình chữ nhật."""
@@ -69,6 +113,18 @@ class GameRenderer:
             # Vùng đích màu xanh neon
             pygame.draw.rect(self.canvas, (0, 220, 100), (vx, vy, vw, vh))
             pygame.draw.rect(self.canvas, (0, 150, 70), (vx, vy, vw, vh), 1)
+    
+    def draw_powerup(self, x, y, powerup_type: str = "speed"):
+        """Vẽ power-up dạng hình tròn với hiệu ứng."""
+        if pygame:
+            vx = int(x * self._sx)
+            vy = int(y * self._sy)
+            vr = max(2, int(10 * self._sy))
+            # Màu vàng cho speed boost
+            if powerup_type == "speed":
+                color = (255, 215, 0)  # Vàng
+                pygame.draw.circle(self.canvas, color, (vx, vy), vr)
+                pygame.draw.circle(self.canvas, (255, 255, 255), (vx, vy), vr, 1)
 
     def _draw_scanlines(self, surface):
         if not pygame:

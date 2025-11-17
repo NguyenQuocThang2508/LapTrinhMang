@@ -98,6 +98,14 @@ class GameServer:
         while True:
             try:
                 time.sleep(0.1)  # 10 FPS
+                current_time = time.time()
+                # Cập nhật power-ups cho tất cả rooms
+                for room in self.rooms.values():
+                    room['logic'].update_powerups(current_time)
+                    # Cập nhật speed boost cho players
+                    for player in room['logic'].players.values():
+                        if current_time >= getattr(player, 'speed_boost_end_time', 0):
+                            player.speed_boost = 1.0
                 self.broadcast_state()
             except Exception as e:
                 print(f"Lỗi broadcast: {e}")
@@ -114,6 +122,7 @@ class GameServer:
                 "type": "state",
                 "players": {},
                 "obstacles": logic.get_obstacles_dict(),
+                "powerups": logic.get_powerups_dict(),
                 "goal": logic.get_goal_dict(),
                 "level": logic.level_index
             }
@@ -122,8 +131,17 @@ class GameServer:
                     "name": getattr(player, "name", ""),
                     "x": player.x,
                     "y": player.y,
-                    "hp": player.hp
+                    "hp": player.hp,
+                    "score": getattr(player, "score", 0),
+                    "speed_boost": getattr(player, "speed_boost", 1.0),
+                    "is_dead": getattr(player, "is_dead", False)
                 }
+            # Thêm leaderboard vào state
+            leaderboard = logic.get_leaderboard(3)
+            state["leaderboard"] = [
+                {"id": pid, "name": name, "score": score}
+                for pid, name, score in leaderboard
+            ]
             # Gửi cho các client trong phòng - CHỈ gửi cho clients đã có player_id
             for client in list(room['clients']):
                 try:
@@ -198,24 +216,59 @@ class GameServer:
                 new_x = max(0, min(GAME_WIDTH, x))
                 new_y = max(0, min(GAME_HEIGHT, y))
 
+                # Kiểm tra player có thể di chuyển không (đã hết cooldown respawn chưa)
+                player = logic.players[player_id]
+                current_time = time.time()
+                if player.is_dead:
+                    if logic.can_respawn(player_id, current_time):
+                        logic.respawn_player(player_id)
+                        self._send_to(handler, {"type": "respawned", "id": player_id})
+                    else:
+                        # Vẫn trong cooldown, không cho di chuyển
+                        return
+                
                 # Nếu chạm obstacle => chết: reset và thông báo riêng cho client
-                if logic.check_collision_with_obstacles(new_x, new_y):
-                    logic.reset_player(player_id)
-                    self._send_to(handler, {"type": "dead", "id": player_id})
+                # Sử dụng collision detection với prediction để tránh đi xuyên qua
+                old_x, old_y = player.x, player.y
+                if logic.check_collision_with_obstacles_prediction(old_x, old_y, new_x, new_y):
+                    logic.reset_player(player_id, current_time)
+                    remaining_cooldown = player.respawn_time - current_time
+                    self._send_to(handler, {
+                        "type": "dead", 
+                        "id": player_id,
+                        "respawn_cooldown": remaining_cooldown
+                    })
                 else:
                     # Cập nhật vị trí
                     player = logic.players[player_id]
                     player.x = new_x
                     player.y = new_y
+                    
+                    # Kiểm tra nhặt power-up
+                    collected_powerup = logic.check_powerup_collection(player.x, player.y)
+                    if collected_powerup:
+                        if collected_powerup.type == "speed":
+                            current_time = time.time()
+                            player.speed_boost = 2.0  # Tăng tốc gấp đôi
+                            player.speed_boost_end_time = current_time + collected_powerup.duration
+                            # Thông báo cho client
+                            self._send_to(handler, {
+                                "type": "powerup_collected",
+                                "powerup_type": "speed",
+                                "duration": collected_powerup.duration
+                            })
+                    
                     # Kiểm tra tới đích để qua màn
                     if logic.check_goal_reached(player.x, player.y):
-                        logic.advance_level()
+                        logic.advance_level(player_id)
                         # Broadcast sự kiện level mới
                         self._broadcast_room(room_id, {
                             "type": "level",
                             "level": logic.level_index,
                             "obstacles": logic.get_obstacles_dict(),
-                            "goal": logic.get_goal_dict()
+                            "goal": logic.get_goal_dict(),
+                            "player_id": player_id,
+                            "score": logic.players[player_id].score
                         })
                 
         elif msg_type == 'leave':
