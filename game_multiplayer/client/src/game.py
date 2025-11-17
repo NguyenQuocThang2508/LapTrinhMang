@@ -20,9 +20,17 @@ class Obstacle:
     height: float = 40.0
 
 @dataclass
+class PowerUp:
+    id: str
+    x: float = 0.0
+    y: float = 0.0
+    type: str = "speed"
+
+@dataclass
 class GameState:
     players: Dict[str, Player] = field(default_factory=dict)
     obstacles: Dict[str, Obstacle] = field(default_factory=dict)
+    powerups: Dict[str, PowerUp] = field(default_factory=dict)
     leaderboard: List[Dict] = field(default_factory=list)  # Top 3 players
 
     def update(self, dt: float):

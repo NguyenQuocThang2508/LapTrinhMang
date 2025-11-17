@@ -3,7 +3,7 @@ This module should validate actions, update authoritative state, and resolve col
 """
 from dataclasses import dataclass
 import random
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Optional
 from shared.constants import GAME_WIDTH, GAME_HEIGHT
 
 @dataclass
@@ -14,6 +14,8 @@ class ServerPlayer:
     y: float = 0.0
     hp: int = 100
     score: int = 0  # Điểm số của người chơi
+    speed_boost: float = 1.0  # Hệ số tăng tốc từ power-up
+    speed_boost_end_time: float = 0.0  # Thời điểm hết hiệu lực speed boost
 
 @dataclass
 class Obstacle:
@@ -23,14 +25,27 @@ class Obstacle:
     width: float = 40.0
     height: float = 40.0
 
+@dataclass
+class PowerUp:
+    id: str
+    x: float = 0.0
+    y: float = 0.0
+    type: str = "speed"  # "speed" cho tăng tốc
+    duration: float = 5.0  # Thời gian hiệu lực (giây)
+    spawn_time: float = 0.0  # Thời điểm spawn
+
 class GameLogic:
     def __init__(self):
         self.players = {}
         self.obstacles: List[Obstacle] = []
+        self.powerups: List[PowerUp] = []  # Danh sách power-ups
         # Level system
         self.level_index: int = 1
         self.start_pos: Tuple[float, float] = (50.0, GAME_HEIGHT - 50.0)
         self.goal_rect: Tuple[float, float, float, float] = (GAME_WIDTH - 90.0, 30.0, 60.0, 60.0)
+        self.powerup_spawn_timer: float = 0.0  # Timer để spawn power-up
+        self.powerup_spawn_interval: float = 10.0  # Spawn mỗi 10 giây
+        self.powerup_counter: int = 0  # Đếm số power-up đã spawn
         self._init_level(self.level_index)
 
     def add_player(self, player_id, name: str = ""):
@@ -60,6 +75,7 @@ class GameLogic:
     def _init_level(self, level: int):
         """Khởi tạo level: obstacles + start/goal."""
         self.obstacles = []
+        self.powerups = []  # Reset power-ups khi chuyển level
         # Cấu hình start/goal theo level
         self.start_pos = (50.0, GAME_HEIGHT - 50.0)
         self.goal_rect = (GAME_WIDTH - 90.0, 30.0, 60.0, 60.0)
@@ -75,6 +91,58 @@ class GameLogic:
             self.obstacles.append(Obstacle(
                 id=f"obstacle_{i}", x=float(x), y=float(y), width=float(w), height=float(h)
             ))
+    
+    def spawn_powerup(self, current_time: float):
+        """Spawn một power-up ngẫu nhiên trên map."""
+        rng = random.Random()
+        # Tìm vị trí không trùng với obstacles
+        max_attempts = 20
+        for _ in range(max_attempts):
+            x = rng.uniform(50, GAME_WIDTH - 50)
+            y = rng.uniform(50, GAME_HEIGHT - 50)
+            # Kiểm tra không trùng với obstacles
+            if not self.check_collision_with_obstacles(x, y, player_radius=20):
+                powerup_id = f"powerup_{self.powerup_counter}"
+                self.powerup_counter += 1
+                self.powerups.append(PowerUp(
+                    id=powerup_id,
+                    x=x,
+                    y=y,
+                    type="speed",
+                    duration=5.0,
+                    spawn_time=current_time
+                ))
+                return True
+        return False
+    
+    def check_powerup_collection(self, player_x: float, player_y: float, player_radius: float = 16) -> Optional[PowerUp]:
+        """Kiểm tra player có nhặt được power-up không. Trả về power-up nếu có."""
+        for powerup in self.powerups[:]:  # Copy list để có thể xóa
+            dx = player_x - powerup.x
+            dy = player_y - powerup.y
+            dist_sq = dx * dx + dy * dy
+            if dist_sq < (player_radius + 10) ** 2:  # 10 là radius của power-up
+                self.powerups.remove(powerup)
+                return powerup
+        return None
+    
+    def update_powerups(self, current_time: float):
+        """Cập nhật power-ups: spawn mới và xóa cũ."""
+        # Spawn power-up mới nếu đủ thời gian
+        if current_time - self.powerup_spawn_timer >= self.powerup_spawn_interval:
+            self.spawn_powerup(current_time)
+            self.powerup_spawn_timer = current_time
+    
+    def get_powerups_dict(self) -> Dict:
+        """Trả về power-ups dưới dạng dict để serialize."""
+        return {
+            pu.id: {
+                "x": pu.x,
+                "y": pu.y,
+                "type": pu.type
+            }
+            for pu in self.powerups
+        }
     
     def check_collision_with_obstacles(self, player_x: float, player_y: float, player_radius: float = 16) -> bool:
         """Kiểm tra va chạm giữa player và obstacles."""

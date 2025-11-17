@@ -113,6 +113,18 @@ class GameRenderer:
             # Vùng đích màu xanh neon
             pygame.draw.rect(self.canvas, (0, 220, 100), (vx, vy, vw, vh))
             pygame.draw.rect(self.canvas, (0, 150, 70), (vx, vy, vw, vh), 1)
+    
+    def draw_powerup(self, x, y, powerup_type: str = "speed"):
+        """Vẽ power-up dạng hình tròn với hiệu ứng."""
+        if pygame:
+            vx = int(x * self._sx)
+            vy = int(y * self._sy)
+            vr = max(2, int(10 * self._sy))
+            # Màu vàng cho speed boost
+            if powerup_type == "speed":
+                color = (255, 215, 0)  # Vàng
+                pygame.draw.circle(self.canvas, color, (vx, vy), vr)
+                pygame.draw.circle(self.canvas, (255, 255, 255), (vx, vy), vr, 1)
 
     def _draw_scanlines(self, surface):
         if not pygame:

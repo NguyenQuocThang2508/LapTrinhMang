@@ -98,6 +98,14 @@ class GameServer:
         while True:
             try:
                 time.sleep(0.1)  # 10 FPS
+                current_time = time.time()
+                # Cập nhật power-ups cho tất cả rooms
+                for room in self.rooms.values():
+                    room['logic'].update_powerups(current_time)
+                    # Cập nhật speed boost cho players
+                    for player in room['logic'].players.values():
+                        if current_time >= getattr(player, 'speed_boost_end_time', 0):
+                            player.speed_boost = 1.0
                 self.broadcast_state()
             except Exception as e:
                 print(f"Lỗi broadcast: {e}")
@@ -114,6 +122,7 @@ class GameServer:
                 "type": "state",
                 "players": {},
                 "obstacles": logic.get_obstacles_dict(),
+                "powerups": logic.get_powerups_dict(),
                 "goal": logic.get_goal_dict(),
                 "level": logic.level_index
             }
@@ -123,7 +132,8 @@ class GameServer:
                     "x": player.x,
                     "y": player.y,
                     "hp": player.hp,
-                    "score": getattr(player, "score", 0)
+                    "score": getattr(player, "score", 0),
+                    "speed_boost": getattr(player, "speed_boost", 1.0)
                 }
             # Thêm leaderboard vào state
             leaderboard = logic.get_leaderboard(3)
@@ -214,6 +224,21 @@ class GameServer:
                     player = logic.players[player_id]
                     player.x = new_x
                     player.y = new_y
+                    
+                    # Kiểm tra nhặt power-up
+                    collected_powerup = logic.check_powerup_collection(player.x, player.y)
+                    if collected_powerup:
+                        if collected_powerup.type == "speed":
+                            current_time = time.time()
+                            player.speed_boost = 2.0  # Tăng tốc gấp đôi
+                            player.speed_boost_end_time = current_time + collected_powerup.duration
+                            # Thông báo cho client
+                            self._send_to(handler, {
+                                "type": "powerup_collected",
+                                "powerup_type": "speed",
+                                "duration": collected_powerup.duration
+                            })
+                    
                     # Kiểm tra tới đích để qua màn
                     if logic.check_goal_reached(player.x, player.y):
                         logic.advance_level(player_id)

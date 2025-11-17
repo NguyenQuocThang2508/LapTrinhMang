@@ -8,7 +8,7 @@ import threading
 import time
 from client.src.config import SERVER_IP, SERVER_PORT, SCREEN_WIDTH, SCREEN_HEIGHT, FPS
 from client.src.client import ClientNetwork
-from client.src.game import GameState, Player, Obstacle
+from client.src.game import GameState, Player, Obstacle, PowerUp
 from client.src.graphics import GameRenderer
 
 def main():
@@ -685,6 +685,10 @@ def main():
                     obstacle.width, obstacle.height
                 )
             
+            # Vẽ power-ups
+            for pu_id, powerup in game_state.powerups.items():
+                renderer.draw_powerup(powerup.x, powerup.y, powerup.type)
+            
             # Vẽ tất cả players
             for pid, player in game_state.players.items():
                 if local_multiplayer and pid in player_ids:
@@ -773,6 +777,26 @@ def handle_server_message(msg, game_state, sounds, audio_enabled):
                 # Cập nhật vị trí nếu obstacles có thể di chuyển
                 game_state.obstacles[obs_id].x = obs_data.get('x', 0)
                 game_state.obstacles[obs_id].y = obs_data.get('y', 0)
+        
+        # Cập nhật power-ups từ server
+        powerups_data = msg.get('powerups', {})
+        # Xóa power-ups không còn tồn tại
+        existing_powerup_ids = set(powerups_data.keys())
+        powerups_to_remove = [pid for pid in game_state.powerups.keys() if pid not in existing_powerup_ids]
+        for pid in powerups_to_remove:
+            del game_state.powerups[pid]
+        # Thêm/cập nhật power-ups
+        for pu_id, pu_data in powerups_data.items():
+            if pu_id not in game_state.powerups:
+                game_state.powerups[pu_id] = PowerUp(
+                    id=pu_id,
+                    x=pu_data.get('x', 0),
+                    y=pu_data.get('y', 0),
+                    type=pu_data.get('type', 'speed')
+                )
+            else:
+                game_state.powerups[pu_id].x = pu_data.get('x', 0)
+                game_state.powerups[pu_id].y = pu_data.get('y', 0)
 
         # Cập nhật goal và level
         game_state.goal = msg.get('goal')
@@ -822,6 +846,16 @@ def handle_server_message(msg, game_state, sounds, audio_enabled):
             awaiting_next_level = False
         except Exception:
             pass
+    elif msg_type == 'powerup_collected':
+        # Player nhặt được power-up
+        powerup_type = msg.get('powerup_type', 'speed')
+        duration = msg.get('duration', 5.0)
+        print(f"[CLIENT] Collected {powerup_type} power-up! Duration: {duration}s")
+        if audio_enabled and sounds.get('goal'):  # Dùng sound goal cho power-up
+            try:
+                sounds['goal'].play()
+            except Exception:
+                pass
     elif msg_type == 'leave':
         # Có player rời
         leave_id = msg.get('id')
