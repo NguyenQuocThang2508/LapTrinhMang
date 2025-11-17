@@ -228,7 +228,9 @@ class GameServer:
                         return
                 
                 # Nếu chạm obstacle => chết: reset và thông báo riêng cho client
-                if logic.check_collision_with_obstacles(new_x, new_y):
+                # Sử dụng collision detection với prediction để tránh đi xuyên qua
+                old_x, old_y = player.x, player.y
+                if logic.check_collision_with_obstacles_prediction(old_x, old_y, new_x, new_y):
                     logic.reset_player(player_id, current_time)
                     remaining_cooldown = player.respawn_time - current_time
                     self._send_to(handler, {

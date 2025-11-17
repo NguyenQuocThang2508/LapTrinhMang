@@ -147,10 +147,19 @@ class GameLogic:
             for pu in self.powerups
         }
     
-    def check_collision_with_obstacles(self, player_x: float, player_y: float, player_radius: float = 16) -> bool:
-        """Kiểm tra va chạm giữa player và obstacles."""
+    def check_collision_with_obstacles(self, player_x: float, player_y: float, player_radius: float = 16, margin: float = 2.0) -> bool:
+        """Kiểm tra va chạm giữa player và obstacles với cải thiện độ chính xác.
+        
+        Args:
+            player_x, player_y: Vị trí player
+            player_radius: Bán kính player
+            margin: Margin an toàn để tránh false positives (mặc định 2.0)
+        """
+        effective_radius = player_radius + margin
+        radius_sq = effective_radius * effective_radius
+        
         for obs in self.obstacles:
-            # Kiểm tra circle-rectangle collision
+            # Kiểm tra circle-rectangle collision với cải thiện
             # Tìm điểm gần nhất trên rectangle với circle
             closest_x = max(obs.x, min(player_x, obs.x + obs.width))
             closest_y = max(obs.y, min(player_y, obs.y + obs.height))
@@ -160,9 +169,75 @@ class GameLogic:
             dy = player_y - closest_y
             dist_sq = dx * dx + dy * dy
             
-            if dist_sq < player_radius * player_radius:
+            # Nếu khoảng cách nhỏ hơn bán kính hiệu dụng => va chạm
+            if dist_sq < radius_sq:
                 return True
+            
+            # Kiểm tra thêm: nếu player nằm hoàn toàn trong rectangle
+            if (obs.x <= player_x <= obs.x + obs.width and 
+                obs.y <= player_y <= obs.y + obs.height):
+                return True
+                
         return False
+    
+    def check_collision_with_obstacles_prediction(self, old_x: float, old_y: float, 
+                                                 new_x: float, new_y: float, 
+                                                 player_radius: float = 16) -> bool:
+        """Kiểm tra va chạm với prediction để tránh player đi xuyên qua obstacles.
+        
+        Sử dụng line-circle intersection để kiểm tra đường đi từ old_pos đến new_pos
+        có cắt obstacles không.
+        """
+        # Kiểm tra vị trí mới trước
+        if self.check_collision_with_obstacles(new_x, new_y, player_radius):
+            return True
+        
+        # Kiểm tra đường đi (line segment) có cắt obstacles không
+        for obs in self.obstacles:
+            # Kiểm tra line segment (old_x,old_y) -> (new_x,new_y) có cắt rectangle không
+            # Sử dụng thuật toán line-rectangle intersection
+            if self._line_intersects_rect(old_x, old_y, new_x, new_y, 
+                                         obs.x, obs.y, obs.width, obs.height, player_radius):
+                return True
+        
+        return False
+    
+    def _line_intersects_rect(self, x1: float, y1: float, x2: float, y2: float,
+                              rect_x: float, rect_y: float, rect_w: float, rect_h: float,
+                              radius: float) -> bool:
+        """Kiểm tra line segment có cắt rectangle (với margin = radius) không."""
+        # Mở rộng rectangle với margin = radius
+        expanded_x = rect_x - radius
+        expanded_y = rect_y - radius
+        expanded_w = rect_w + 2 * radius
+        expanded_h = rect_h + 2 * radius
+        
+        # Kiểm tra line segment có cắt expanded rectangle không
+        # Sử dụng thuật toán Liang-Barsky hoặc đơn giản hơn: kiểm tra các cạnh
+        
+        # Kiểm tra 4 cạnh của rectangle
+        edges = [
+            (expanded_x, expanded_y, expanded_x + expanded_w, expanded_y),  # Top
+            (expanded_x + expanded_w, expanded_y, expanded_x + expanded_w, expanded_y + expanded_h),  # Right
+            (expanded_x, expanded_y + expanded_h, expanded_x + expanded_w, expanded_y + expanded_h),  # Bottom
+            (expanded_x, expanded_y, expanded_x, expanded_y + expanded_h),  # Left
+        ]
+        
+        for edge_x1, edge_y1, edge_x2, edge_y2 in edges:
+            if self._line_segments_intersect(x1, y1, x2, y2, edge_x1, edge_y1, edge_x2, edge_y2):
+                return True
+        
+        return False
+    
+    def _line_segments_intersect(self, x1: float, y1: float, x2: float, y2: float,
+                                 x3: float, y3: float, x4: float, y4: float) -> bool:
+        """Kiểm tra 2 line segments có giao nhau không."""
+        # Sử dụng cross product để kiểm tra
+        def ccw(Ax, Ay, Bx, By, Cx, Cy):
+            return (Cy - Ay) * (Bx - Ax) > (By - Ay) * (Cx - Ax)
+        
+        return (ccw(x1, y1, x3, y3, x4, y4) != ccw(x2, y2, x3, y3, x4, y4) and
+                ccw(x1, y1, x2, y2, x3, y3) != ccw(x1, y1, x2, y2, x4, y4))
 
     def check_goal_reached(self, x: float, y: float, radius: float = 16) -> bool:
         """Kiểm tra người chơi đã chạm vùng đích chưa (circle-rect overlap)."""
