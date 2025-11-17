@@ -1,0 +1,37 @@
+========================================
+HƯỚNG DẪN CHẠY GAME MULTIPLAYER
+========================================
+
+1. CÀI ĐẶT DEPENDENCIES
+------------------------
+- Đảm bảo đã cài Python 3.x
+- Cài pygame: pip install -r requirements.txt
+
+2. CHẠY SERVER
+-------------
+Từ thư mục game_multiplayer, chạy:
+  python -m server.main
+
+Server sẽ chạy ở port 5000 và chờ kết nối.
+
+3. CHẠY CLIENT
+--------------
+Mở terminal/console mới, từ thư mục game_multiplayer, chạy:
+  python -m client.main
+
+Có thể mở nhiều client để chơi multiplayer!
+
+4. ĐIỀU KHIỂN
+-----------
+- W/S hoặc UP/DOWN: Di chuyển lên/xuống
+- A/D hoặc LEFT/RIGHT: Di chuyển trái/phải
+- ESC hoặc đóng cửa sổ: Thoát game
+
+5. MÔ TẢ
+--------
+- Vòng tròn XANH LÁ: Bạn
+- Vòng tròn ĐỎ: Người chơi khác
+- Tất cả players có thể di chuyển và nhìn thấy nhau
+
+CHÚC VUI!
+

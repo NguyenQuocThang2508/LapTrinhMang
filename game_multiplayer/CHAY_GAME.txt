@@ -1,0 +1,54 @@
+========================================
+HƯỚNG DẪN CHẠY GAME MULTIPLAYER
+========================================
+
+📋 CÁC LỆNH CHẠY GAME:
+
+1. CHẠY SERVER (Terminal 1):
+   -------------------------
+   cd "D:/Zalo Received Files/LTM/LTM/game_multiplayer"
+   python -m server.main
+
+   Hoặc double-click: start_server.bat
+
+2. CHẠY CLIENT (Terminal 2 - mới):
+   --------------------------------
+   cd "D:/Zalo Received Files/LTM/LTM/game_multiplayer"
+   python -m client.main
+
+   Hoặc double-click: start_client.bat
+
+========================================
+KIỂM TRA ÂM THANH:
+========================================
+
+Chạy script test:
+   python test_audio.py
+
+Tạo lại file âm thanh (nếu cần):
+   python create_sounds.py
+
+========================================
+ĐIỀU KHIỂN TRONG GAME:
+========================================
+
+- W/S hoặc ↑/↓: Di chuyển lên/xuống
+- A/D hoặc ←/→: Di chuyển trái/phải
+- Shift: Chạy nhanh (dash)
+- ESC: Thoát game
+
+========================================
+LƯU Ý:
+========================================
+
+✓ Phải chạy SERVER trước, sau đó mới chạy CLIENT
+✓ Có thể mở nhiều client để chơi multiplayer
+✓ Khi chạy client, bạn sẽ được hỏi:
+  - Bật âm thanh? (Y/n) - Nhập 'n' nếu ở lớp học
+  - Tên player
+  - Room ID
+  - Chọn điều khiển (1-4)
+  - Bật chế độ 2 người 1 màn hình? (y/N)
+
+========================================
+
